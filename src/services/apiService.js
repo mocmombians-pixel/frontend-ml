@@ -1,4 +1,4 @@
-const API_URL ="http://localhost:8080/api/v1/"
+const API_URL = import.meta.env.DEV ? "http://localhost:8080/api/v1/" : "http://mercadito.2.24.105.6.sslip.io/api/v1/"
 
 
 //metodo helper para obtener las cabeceras con jwt
