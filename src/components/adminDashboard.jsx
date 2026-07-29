@@ -72,6 +72,11 @@ export const AdminDashboard = ({}) => {
     (c.nombre || '').toLowerCase().includes(busqueda.toLowerCase())
   );
 
+  const ventasFiltradas = ventas.filter(v =>
+    (v.cliente?.nombre || '').toLowerCase().includes(busqueda.toLowerCase()) ||
+    (v.estadoPago || '').toLowerCase().includes(busqueda.toLowerCase())
+  );
+
   // --- Estado del modal CRUD ---
   const [modal, setModal] = useState({ open: false, type: null, mode: null, data: null });
   // modal.type = 'producto' | 'proveedor' | 'categoria'
@@ -389,10 +394,11 @@ export const AdminDashboard = ({}) => {
           />
           <TabBoton
             activa={tabActiva === 'ventas'}
-            onClick={() => {}}
+         
+            onClick={() => { setTabActiva('ventas'); setBusqueda(''); }}
             icono={<ShoppingBag className='w-4 h-4' />}
             label='Registro Ventas'
-            deshabilitado={true}
+            
           />
           <TabBoton
             activa={tabActiva === 'proveedores'}
@@ -416,7 +422,7 @@ export const AdminDashboard = ({}) => {
 
         <div className='p-6'>
           {/* Buscador */}
-          {tabActiva !== 'ventas' && (
+             {true && (
             <div className='relative mb-6 max-w-md group'>
               <div className='absolute inset-0 bg-gradient-to-r from-purple-500/5 to-violet-500/5 rounded-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-300'></div>
               <Search className='w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 group-focus-within:text-purple-500 transition-all duration-300' />
@@ -424,7 +430,7 @@ export const AdminDashboard = ({}) => {
                 type='text'
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
-                placeholder={tabActiva === 'productos' ? 'Buscar producto por nombre...' : tabActiva === 'proveedores' ? 'Buscar proveedor por nombre o email...' : tabActiva === 'categorias' ? 'Buscar categoría por nombre...' : 'Buscar cliente por nombre o correo...'}
+                placeholder={tabActiva === 'productos' ? 'Buscar producto por nombre...' : tabActiva === 'proveedores' ? 'Buscar proveedor por nombre o email...' : tabActiva === 'categorias' ? 'Buscar categoría por nombre...' : tabActiva === 'ventas' ? 'Buscar venta por cliente o estado...' : 'Buscar cliente por nombre o correo...'}
                 className='w-full pl-10 pr-10 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-400 text-sm transition-all duration-200 bg-white hover:border-gray-300'
               />
               {busqueda && (
@@ -604,22 +610,53 @@ export const AdminDashboard = ({}) => {
           )}
 
           {/* Módulo Ventas (en desarrollo) */}
+          {/* Tabla de Ventas */}
           {tabActiva === 'ventas' && (
-            <div className='flex flex-col items-center justify-center py-20 text-center'>
-              <div className='w-24 h-24 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 flex items-center justify-center mb-5 border border-amber-100/50'>
-                <Clock className='w-12 h-12 text-amber-400' />
+            <div>
+              <div className='flex items-center justify-between mb-4'>
+                <div className='flex items-center gap-2'>
+                  <ShoppingBag className='w-4 h-4 text-purple-500' />
+                  <span className='text-sm font-bold text-gray-700'>
+                    Ventas <span className='text-gray-400 font-normal'>({ventasFiltradas.length})</span>
+                  </span>
+                </div>
               </div>
-              <h3 className='text-2xl font-black text-gray-700 mb-2'>Módulo de Ventas</h3>
-              <p className='text-gray-400 text-sm max-w-md leading-relaxed'>
-                Este módulo se encuentra actualmente en desarrollo. Pronto podrás gestionar
-                y dar seguimiento a todas las ventas de tu tienda desde aquí.
-              </p>
-              <div className='mt-6 px-5 py-2 bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700 text-xs font-bold rounded-full border border-amber-200/80 shadow-sm'>
-                🚧 Próximamente disponible
-              </div>
+              <TablaGenerica
+                columnas={['ID', 'Fecha', 'Cliente', 'Productos', 'Total', 'Estado', 'Acciones']}
+                filas={ventasFiltradas.map(v => [
+                  <span className='font-mono text-gray-400 text-xs'>#{v.id}</span>,
+                  <span className='text-gray-600 text-sm'>
+                    {v.fecha ? new Date(v.fecha).toLocaleDateString('es-MX') : '—'}
+                  </span>,
+                  <span className='font-semibold text-gray-800'>{v.cliente?.nombre || '—'}</span>,
+                  <span
+                    className='text-gray-500 text-xs max-w-[220px] block truncate'
+                    title={(v.detalles || []).map(d => `${d.producto?.nombre} x${d.cantidad}`).join(', ')}
+                  >
+                    {(v.detalles || []).map(d => `${d.producto?.nombre} x${d.cantidad}`).join(', ') || '—'}
+                  </span>,
+                  <span className='font-black text-gray-900 text-base tracking-tight'>
+                    ${(v.total || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                  </span>,
+                  <EstadoBadge estado={v.estadoPago} />,
+                  <AccionesBoton
+                    onDetalles={() => setDetalle({ open: true, type: 'venta', data: v })}
+                  />
+                ])}
+                vacio={
+                  <div className='flex flex-col items-center gap-4 py-12'>
+                    <div className='w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 flex items-center justify-center'>
+                      <ShoppingBag className='w-8 h-8 text-amber-300' />
+                    </div>
+                    <div className='text-center'>
+                      <p className='font-bold text-gray-500 text-sm'>No hay ventas registradas</p>
+                      <p className='text-gray-400 text-xs mt-1'>Intenta modificar los términos de búsqueda.</p>
+                    </div>
+                  </div>
+                }
+              />
             </div>
           )}
-
           {/* Tabla de Clientes */}
           {tabActiva === 'clientes' && (
             <div>
@@ -694,6 +731,7 @@ export const AdminDashboard = ({}) => {
   <DetalleModal
     type={detalle.type}
     data={detalle.data}
+     ventas={ventas}
     onCerrar={() => setDetalle({ open: false, type: null, data: null })}
   />
 )}
@@ -748,6 +786,31 @@ const StockBadge = ({ stock }) => {
     <span className='inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-50 text-red-700 text-[11px] font-bold rounded-md border border-red-200/50'>
       <span className='w-1.5 h-1.5 bg-red-500 rounded-full'></span>
       Sin stock
+    </span>
+  );
+};
+
+const EstadoBadge = ({ estado }) => {
+  const e = (estado || '').toUpperCase();
+  if (e === 'PAGADO' || e === 'PAID') {
+    return (
+      <span className='inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-700 text-[11px] font-bold rounded-md border border-emerald-200/50'>
+        <span className='w-1.5 h-1.5 bg-emerald-500 rounded-full'></span>
+        Pagado
+      </span>
+    );
+  }
+  if (e === 'PENDIENTE' || e === 'PENDING') {
+    return (
+      <span className='inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 text-amber-700 text-[11px] font-bold rounded-md border border-amber-200/50'>
+        <span className='w-1.5 h-1.5 bg-amber-500 rounded-full'></span>
+        Pendiente
+      </span>
+    );
+  }
+  return (
+    <span className='inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 text-gray-600 text-[11px] font-bold rounded-md border border-gray-200/50'>
+      {estado || '—'}
     </span>
   );
 };
@@ -975,12 +1038,13 @@ const ConfirmDialog = ({ nombre, onConfirmar, onCancelar }) => (
 );
 
 ///
-const DetalleModal = ({ type, data, onCerrar }) => {
+const DetalleModal = ({ type, data, ventas = [], onCerrar  }) => {
   const config = {
     producto: { titulo: 'Detalles del Producto', icono: <Package className='w-5 h-5' /> },
     proveedor: { titulo: 'Detalles del Proveedor', icono: <Building2 className='w-5 h-5' /> },
     categoria: { titulo: 'Detalles de la Categoría', icono: <Tags className='w-5 h-5' /> },
     cliente: { titulo: 'Detalles del Cliente', icono: <Users className='w-5 h-5' /> },
+    venta: { titulo: 'Detalles de la Venta', icono: <ShoppingBag className='w-5 h-5' /> },
   };
   const { titulo, icono } = config[type] || config.categoria;
   const inicial = (data.nombre || '?').charAt(0).toUpperCase();
@@ -1026,7 +1090,9 @@ const DetalleModal = ({ type, data, onCerrar }) => {
                 {icono}
                 <span className='text-purple-200/90 text-[10px] font-bold uppercase tracking-[0.15em]'>{titulo}</span>
               </div>
-              <h3 className='text-xl font-black truncate'>{data.nombre || '—'}</h3>
+             <h3 className='text-xl font-black truncate'>
+                {type === 'venta' ? `Venta #${data.id}` : (data.nombre || '—')}
+              </h3>
             </div>
           </div>
         </div>
@@ -1061,17 +1127,94 @@ const DetalleModal = ({ type, data, onCerrar }) => {
               <FilaDetalle icono={<Building2 className='w-3.5 h-3.5' />} label='Proveedor' valor={data.proveedor?.nombre || '—'} />
             </>
           )}
+         {type === 'proveedor' && (() => {
+            const ventasProveedor = ventas.filter(v =>
+              (v.detalles || []).some(d => d.producto?.proveedor?.id === data.id)
+            );
+            const totalVendido = ventasProveedor.reduce((acc, v) => {
+              const suma = (v.detalles || [])
+                .filter(d => d.producto?.proveedor?.id === data.id)
+                .reduce((s, d) => s + (d.subtotal || 0), 0);
+              return acc + suma;
+            }, 0);
+            return (
+              <>
+                <FilaDetalle icono={<Phone className='w-3.5 h-3.5' />} label='Teléfono' valor={data.telefono || '—'} />
+                <FilaDetalle icono={<Mail className='w-3.5 h-3.5' />} label='Email' valor={data.email || '—'} />
+                <FilaDetalle icono={<MapPin className='w-3.5 h-3.5' />} label='Dirección' valor={data.direccion || '—'} />
 
-          {type === 'proveedor' && (
-            <>
-              <FilaDetalle icono={<Phone className='w-3.5 h-3.5' />} label='Teléfono' valor={data.telefono || '—'} />
-              <FilaDetalle icono={<Mail className='w-3.5 h-3.5' />} label='Email' valor={data.email || '—'} />
-              <FilaDetalle icono={<MapPin className='w-3.5 h-3.5' />} label='Dirección' valor={data.direccion || '—'} />
-            </>
-          )}
+                <div className='pt-2'>
+                  <p className='text-xs font-bold text-gray-400 uppercase tracking-wider mb-2'>Ventas de sus productos</p>
+                  <div className='grid grid-cols-2 gap-2.5 mb-2'>
+                    <div className='bg-cyan-50 rounded-xl p-3.5 border border-cyan-100'>
+                      <p className='text-[10px] text-cyan-500 font-bold uppercase tracking-wider mb-1'>Ventas</p>
+                      <p className='text-lg font-black text-cyan-800'>{ventasProveedor.length}</p>
+                    </div>
+                    <div className='bg-emerald-50 rounded-xl p-3.5 border border-emerald-100'>
+                      <p className='text-[10px] text-emerald-500 font-bold uppercase tracking-wider mb-1'>Total vendido</p>
+                      <p className='text-lg font-black text-emerald-800'>
+                        ${totalVendido.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                      </p>
+                    </div>
+                  </div>
+                  {ventasProveedor.length > 0 ? (
+                    <div className='space-y-1.5 max-h-40 overflow-y-auto'>
+                      {ventasProveedor.map(v => (
+                        <div key={v.id} className='flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 text-xs'>
+                          <span className='text-gray-600'>Venta #{v.id} — {v.cliente?.nombre || '—'}</span>
+                          <span className='font-bold text-gray-800'>
+                            ${(v.detalles || [])
+                              .filter(d => d.producto?.proveedor?.id === data.id)
+                              .reduce((s, d) => s + (d.subtotal || 0), 0)
+                              .toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className='text-xs text-gray-400'>Este proveedor aún no tiene ventas registradas.</p>
+                  )}
+                </div>
+              </>
+            );
+          })()}
 
           {type === 'categoria' && (
             <FilaDetalle icono={<Tags className='w-3.5 h-3.5' />} label='Nombre' valor={data.nombre} />
+          )}
+
+          {type === 'venta' && (
+            <>
+              <FilaDetalle icono={<Users className='w-3.5 h-3.5' />} label='Cliente' valor={data.cliente?.nombre || '—'} />
+              <FilaDetalle icono={<Clock className='w-3.5 h-3.5' />} label='Fecha' valor={data.fecha ? new Date(data.fecha).toLocaleDateString('es-MX') : '—'} />
+              <div className='grid grid-cols-2 gap-2.5'>
+                <div className='bg-gradient-to-br from-purple-50 to-fuchsia-50 rounded-xl p-3.5 border border-purple-100/70'>
+                  <p className='text-[10px] text-purple-400 font-bold uppercase tracking-wider mb-1'>Total</p>
+                  <p className='text-lg font-black text-purple-900'>
+                    ${Number(data.total || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                  </p>
+                </div>
+                <div className='rounded-xl p-3.5 border bg-gray-50 border-gray-100'>
+                  <p className='text-[10px] font-bold uppercase tracking-wider mb-1 text-gray-500'>Estado</p>
+                  <p className='text-sm font-black text-gray-700'>{data.estadoPago || '—'}</p>
+                </div>
+              </div>
+              <div className='pt-2'>
+                <p className='text-xs font-bold text-gray-400 uppercase tracking-wider mb-2'>Productos</p>
+                <div className='space-y-1.5'>
+                  {(data.detalles || []).map(d => (
+                    <div key={d.id} className='flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 text-sm'>
+                      <span className='text-gray-700 font-medium'>
+                        {d.producto?.nombre} <span className='text-gray-400'>x{d.cantidad}</span>
+                      </span>
+                      <span className='font-bold text-gray-800'>
+                        ${(d.subtotal || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
           )}
 
           {type === 'cliente' && (
