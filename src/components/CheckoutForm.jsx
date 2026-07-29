@@ -164,7 +164,8 @@ const PaymentForm = ({ venta, onPaymentSuccess, setCurrentTab }) => {
     </div>
   );
 };
-export const CheckoutForm = ({ ventaActiva, setCurrentTab }) => {
+//export const CheckoutForm = ({ ventaActiva, setCurrentTab }) => {
+  export const CheckoutForm = ({ ventaActiva, setVistaActual }) => {
   const [pagado, setPagado] = useState(false);
 
 if (!ventaActiva) {
@@ -176,7 +177,7 @@ if (!ventaActiva) {
         <h3 className="font-black text-lg text-gray-800">No hay ninguna venta activa</h3>
         <p className="text-gray-400 text-sm mt-1.5 leading-relaxed">Regresa al catálogo y añade productos para realizar el pago.</p>
         <button
-          onClick={() => setCurrentTab('catalog')}
+          onClick={() => setVistaActual('catalogo')}
           className="mt-5 bg-gradient-to-r from-purple-700 to-fuchsia-600 hover:from-violet-500 hover:to-purple-400 text-white px-6 py-2.5 rounded-xl text-sm font-bold cursor-pointer shadow-md transition-all duration-200"
         >
           Ver Catálogo
@@ -227,13 +228,13 @@ if (!ventaActiva) {
 
           <div className="flex gap-3">
             <button
-              onClick={() => setCurrentTab('miscompras')}
+              onClick={() => setVistaActual('miscompras')}
               className="flex-1 bg-gradient-to-r from-purple-700 to-fuchsia-600 hover:from-violet-500 hover:to-purple-400 text-white py-3 rounded-xl text-sm font-bold shadow-md transition-all duration-200 cursor-pointer"
             >
               Ver Mis Compras
             </button>
             <button
-              onClick={() => setCurrentTab('catalog')}
+              onClick={() => setVistaActual('catalogo')}
               className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl text-sm font-bold transition-colors cursor-pointer"
             >
               Seguir Comprando
@@ -302,7 +303,7 @@ if (!ventaActiva) {
           <PaymentForm 
             venta={ventaActiva} 
             onPaymentSuccess={handlePaymentSuccess} 
-            setCurrentTab={setCurrentTab} 
+           // setCurrentTab={setCurrentTab} 
           />
         </Elements>
       </div>
