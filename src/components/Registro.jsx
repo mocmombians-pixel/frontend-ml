@@ -1,14 +1,15 @@
 import React, {useState} from "react";
 import { apiService } from "../services/apiService";
 import { UserPlus, User, Mail, Lock, Phone, MapPin,
-    Shield, AlertCircle, CheckCircle, Sparkles } from 'lucide-react';
+     AlertCircle, CheckCircle, Sparkles } from 'lucide-react';
     
     export const Registro = ({onRegisterSuccess, onGoToLogin}) => {
 
         const [nombre, setNombre] = useState('');
         const [username, setUsername] = useState('');
         const [password, setPassword] = useState('');
-        const [rol, setRol] = useState('ROLE_CLIENTE');
+        //const [rol, setRol] = useState('ROLE_CLIENTE');
+        const rol = 'ROLE_CLIENTE'; // Todo registro público es de tipo Cliente
         const [direccion, setDireccion] = useState('');
         const [telefono, setTelefono] = useState('');
 
@@ -86,7 +87,7 @@ import { UserPlus, User, Mail, Lock, Phone, MapPin,
                 </div>
             )}
 
-            <div>
+          {/*}  <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                 <Shield className="w-3.5 h-3.5 text-purple-600"/> Selecciona tu rol
                 </label>
@@ -101,7 +102,7 @@ import { UserPlus, User, Mail, Lock, Phone, MapPin,
                     <option value="ROLE_ADMIN">Administrador (Jefe)</option>
                 </select>
 
-            </div>
+            </div>*/}
 
     <div>
         <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Nombre Completo</label>

@@ -3,7 +3,7 @@ import { apiService } from '../services/apiService';
 import {
   DollarSign, ShoppingBag, Package, Tags, Users,
   AlertTriangle, Search, X, Clock, ShieldAlert,
-  ShoppingCart, BarChart3, Building2, Eye, Info, Phone, Mail, MapPin, Tag
+  ShoppingCart, BarChart3, Building2, Eye, Info, Phone, Mail, MapPin, Tag, UserPlus
 } from 'lucide-react';
 
 export const AdminDashboard = ({}) => {
@@ -86,6 +86,44 @@ export const AdminDashboard = ({}) => {
   //nueva liena
   const [detalle, setDetalle] = useState({ open: false, type: null, data: null });
   const [guardando, setGuardando] = useState(false);
+
+  // --- Estado para "Registrar Usuario" (solo Admin) ---
+  const [registroForm, setRegistroForm] = useState({
+    nombre: '', username: '', password: '', rol: 'ROLE_CLIENTE', telefono: '', direccion: ''
+  });
+  const [registroError, setRegistroError] = useState('');
+  const [registroSuccess, setRegistroSuccess] = useState('');
+  const [registrando, setRegistrando] = useState(false);
+
+  const handleRegistroChange = (e) => {
+    setRegistroForm({ ...registroForm, [e.target.name]: e.target.value });
+  };
+
+  const handleRegistrarUsuario = async (e) => {
+    e.preventDefault();
+    setRegistroError('');
+    setRegistroSuccess('');
+    setRegistrando(true);
+    try {
+      const payload = {
+        username: registroForm.username,
+        password: registroForm.password,
+        nombre: registroForm.nombre,
+        rol: registroForm.rol,
+        telefono: registroForm.telefono || null,
+        direccion: registroForm.direccion || null,
+      };
+      await apiService.registrarUsuarioAdmin(payload);
+      setRegistroSuccess(`¡${registroForm.rol === 'ROLE_ADMIN' ? 'Administrador' : 'Cliente'} registrado con éxito!`);
+      setRegistroForm({ nombre: '', username: '', password: '', rol: 'ROLE_CLIENTE', telefono: '', direccion: '' });
+      const nuevosClientes = await apiService.getClientes();
+      setClientes(nuevosClientes || []);
+    } catch (err) {
+      setRegistroError(err.message || 'Error al registrar el usuario.');
+    } finally {
+      setRegistrando(false);
+    }
+  };
 
   // --- Funciones CRUD ---
   const abrirModalCrear = (tipo) => {
@@ -418,11 +456,17 @@ export const AdminDashboard = ({}) => {
             icono={<Users className='w-4 h-4' />}
             label='Gestión Clientes'
           />
+          <TabBoton
+            activa={tabActiva === 'registrar'}
+            onClick={() => { setTabActiva('registrar'); setBusqueda(''); }}
+            icono={<UserPlus className='w-4 h-4' />}
+            label='Registrar Usuario'
+          />
         </div>
 
         <div className='p-6'>
           {/* Buscador */}
-             {true && (
+             {tabActiva !== 'registrar' &&  (
             <div className='relative mb-6 max-w-md group'>
               <div className='absolute inset-0 bg-gradient-to-r from-purple-500/5 to-violet-500/5 rounded-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-300'></div>
               <Search className='w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 group-focus-within:text-purple-500 transition-all duration-300' />
@@ -708,8 +752,62 @@ export const AdminDashboard = ({}) => {
               />
             </div>
           )}
+          {/* Formulario Registrar Usuario (solo Admin) */}
+          {tabActiva === 'registrar' && (
+            <div className='max-w-lg'>
+              <div className='flex items-center gap-2 mb-5'>
+                <UserPlus className='w-4 h-4 text-purple-500' />
+                <span className='text-sm font-bold text-gray-700'>Registrar nuevo usuario</span>
+              </div>
+
+              {registroError && (
+                <div className='bg-gradient-to-r from-red-50 to-rose-50/80 text-red-700 p-4 rounded-xl flex items-start gap-2.5 border border-red-200/80 text-sm shadow-sm mb-4'>
+                  <AlertTriangle className='w-4 h-4 text-red-500 flex-shrink-0 mt-0.5' />
+                  <span className='font-medium'>{registroError}</span>
+                </div>
+              )}
+              {registroSuccess && (
+                <div className='bg-gradient-to-r from-emerald-50 to-green-50/80 text-emerald-700 p-4 rounded-xl flex items-start gap-2.5 border border-emerald-200/80 text-sm shadow-sm mb-4'>
+                  <ShieldAlert className='w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5' />
+                  <span className='font-medium'>{registroSuccess}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleRegistrarUsuario} className='space-y-4'>
+                <div>
+                  <label className='block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5'>Rol del usuario</label>
+                  <select
+                    name='rol'
+                    value={registroForm.rol}
+                    onChange={handleRegistroChange}
+                    className='w-full px-3.5 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 text-sm bg-white'
+                  >
+                    <option value='ROLE_CLIENTE'>Cliente (Comprador)</option>
+                    <option value='ROLE_ADMIN'>Administrador (Jefe)</option>
+                  </select>
+                </div>
+
+                <CampoForm label='Nombre completo' name='nombre' value={registroForm.nombre} onChange={handleRegistroChange} required />
+                <CampoForm label='Correo electrónico' name='username' type='email' value={registroForm.username} onChange={handleRegistroChange} required />
+                <CampoForm label='Contraseña' name='password' type='password' value={registroForm.password} onChange={handleRegistroChange} required />
+                <CampoForm label='Teléfono' name='telefono' value={registroForm.telefono} onChange={handleRegistroChange} />
+                <CampoForm label='Dirección' name='direccion' value={registroForm.direccion} onChange={handleRegistroChange} />
+
+                <button
+                  type='submit'
+                  disabled={registrando}
+                  className='w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-700 to-fuchsia-600 hover:from-purple-600 hover:to-fuchsia-500 text-white font-bold py-3 rounded-xl transition-all duration-200 shadow-md disabled:opacity-50'
+                >
+                  <UserPlus className='w-4 h-4' />
+                  {registrando ? 'Registrando...' : 'Registrar usuario'}
+                </button>
+              </form>
+            </div>
+          )}
         </div>
       </div>
+
+      
 
       {/* ═══════ MODAL CRUD ═══════ */}
       {modal.open && (

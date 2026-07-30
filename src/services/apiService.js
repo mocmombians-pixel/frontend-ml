@@ -55,6 +55,16 @@ export const apiService = {
      return await handleResponse(response);
     },
 
+    //metodo para que un Admin registre usuarios (clientes o admins)
+    registrarUsuarioAdmin: async (userData) => {
+        const response = await fetch(API_URL + 'usuarios/registrar', {
+            method: 'POST',
+            headers: getHeaders(), // incluye el token, así el backend sabe que eres tú
+            body: JSON.stringify(userData),
+        });
+        return await handleResponse(response);
+    },
+
     //Metodo de login 
     login: async (username, password) =>{
         const response = await fetch(API_URL + 'auth/login',{
