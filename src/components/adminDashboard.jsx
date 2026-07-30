@@ -13,6 +13,7 @@ export const AdminDashboard = ({}) => {
   const [proveedores, setProveedores] = useState([]);
   const [clientes, setClientes] = useState([]);
   const [ventas, setVentas] = useState([]);
+   const [admins, setAdmins] = useState([]);
   const [carga, setCarga] = useState(true);
   const [error, setError] = useState('');
   const [tabActiva, setTabActiva] = useState('productos');
@@ -23,19 +24,21 @@ export const AdminDashboard = ({}) => {
     const cargarDatos = async () => {
       setCarga(true);
       try {
-        const [datosProductos, datosCategorias, datosProveedores, datosClientes, datosVentas] =
+        const [datosProductos, datosCategorias, datosProveedores, datosClientes, datosVentas, datosAdmins] =
           await Promise.all([
             apiService.getProductos(),
             apiService.getCategorias(),
             apiService.getProveedores(),
             apiService.getClientes(),
             apiService.getVentas(),
+            apiService.getAdmins(),
           ]);
         setProductos(datosProductos || []);
         setCategorias(datosCategorias || []);
         setProveedores(datosProveedores || []);
         setClientes(datosClientes || []);
         setVentas(datosVentas || []);
+        setAdmins(datosAdmins || []);
       } catch (err) {
         setError('Error al cargar los datos del panel: ' + err.message);
       } finally {
@@ -113,11 +116,23 @@ export const AdminDashboard = ({}) => {
         telefono: registroForm.telefono || null,
         direccion: registroForm.direccion || null,
       };
-      await apiService.registrarUsuarioAdmin(payload);
+     /* await apiService.registrarUsuarioAdmin(payload);
       setRegistroSuccess(`¡${registroForm.rol === 'ROLE_ADMIN' ? 'Administrador' : 'Cliente'} registrado con éxito!`);
       setRegistroForm({ nombre: '', username: '', password: '', rol: 'ROLE_CLIENTE', telefono: '', direccion: '' });
       const nuevosClientes = await apiService.getClientes();
+      setClientes(nuevosClientes || []);*/
+
+      await apiService.registrarUsuarioAdmin(payload);
+      setRegistroSuccess(`¡${registroForm.rol === 'ROLE_ADMIN' ? 'Administrador' : 'Cliente'} registrado con éxito!`);
+      setRegistroForm({ nombre: '', username: '', password: '', rol: 'ROLE_CLIENTE', telefono: '', direccion: '' });
+      const [nuevosClientes, nuevosAdmins] = await Promise.all([
+        apiService.getClientes(),
+        apiService.getAdmins(),
+      ]);
       setClientes(nuevosClientes || []);
+      setAdmins(nuevosAdmins || []);
+
+
     } catch (err) {
       setRegistroError(err.message || 'Error al registrar el usuario.');
     } finally {
@@ -787,11 +802,16 @@ export const AdminDashboard = ({}) => {
                   </select>
                 </div>
 
-                <CampoForm label='Nombre completo' name='nombre' value={registroForm.nombre} onChange={handleRegistroChange} required />
+               <CampoForm label='Nombre completo' name='nombre' value={registroForm.nombre} onChange={handleRegistroChange} required />
                 <CampoForm label='Correo electrónico' name='username' type='email' value={registroForm.username} onChange={handleRegistroChange} required />
                 <CampoForm label='Contraseña' name='password' type='password' value={registroForm.password} onChange={handleRegistroChange} required />
-                <CampoForm label='Teléfono' name='telefono' value={registroForm.telefono} onChange={handleRegistroChange} />
-                <CampoForm label='Dirección' name='direccion' value={registroForm.direccion} onChange={handleRegistroChange} />
+
+                {registroForm.rol === 'ROLE_CLIENTE' && (
+                  <>
+                    <CampoForm label='Teléfono' name='telefono' value={registroForm.telefono} onChange={handleRegistroChange} />
+                    <CampoForm label='Dirección' name='direccion' value={registroForm.direccion} onChange={handleRegistroChange} />
+                  </>
+                )}
 
                 <button
                   type='submit'
@@ -802,6 +822,34 @@ export const AdminDashboard = ({}) => {
                   {registrando ? 'Registrando...' : 'Registrar usuario'}
                 </button>
               </form>
+
+              {/* Tabla de Administradores existentes */}
+              <div className='mt-8'>
+                <div className='flex items-center gap-2 mb-4'>
+                  <ShieldAlert className='w-4 h-4 text-purple-500' />
+                  <span className='text-sm font-bold text-gray-700'>
+                    Administradores <span className='text-gray-400 font-normal'>({admins.length})</span>
+                  </span>
+                </div>
+                <TablaGenerica
+                  columnas={['ID', 'Nombre', 'Correo']}
+                  filas={admins.map(a => [
+                    <span className='font-mono text-gray-400 text-xs'>#{a.id}</span>,
+                    <div className='flex items-center gap-3'>
+                      <div className='w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-violet-500 text-white flex items-center justify-center text-sm font-bold shadow-sm flex-shrink-0'>
+                        {(a.nombre || '?').charAt(0).toUpperCase()}
+                      </div>
+                      <span className='font-semibold text-gray-800'>{a.nombre || '—'}</span>
+                    </div>,
+                    <span className='text-gray-600 text-sm'>{a.username || '—'}</span>,
+                  ])}
+                  vacio={
+                    <div className='flex flex-col items-center gap-4 py-8'>
+                      <p className='font-bold text-gray-500 text-sm'>No hay administradores registrados</p>
+                    </div>
+                  }
+                />
+              </div>
             </div>
           )}
         </div>

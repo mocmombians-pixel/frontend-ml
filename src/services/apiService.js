@@ -54,6 +54,13 @@ export const apiService = {
      } );
      return await handleResponse(response);
     },
+    //metodo para traer la lista de administradores
+    getAdmins: async () => {
+        const response = await fetch(API_URL + 'usuarios/admins', {
+            headers: getHeaders(),
+        });
+        return await handleResponse(response);
+    },
 
     //metodo para que un Admin registre usuarios (clientes o admins)
     registrarUsuarioAdmin: async (userData) => {
