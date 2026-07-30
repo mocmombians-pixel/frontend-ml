@@ -1,10 +1,25 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { apiService } from '../services/apiService';
 import { User, Mail, Shield, ShoppingBag, Settings, LogOut, Phone, MapPin } from 'lucide-react';
 
 export const Perfil = ({ user, setVistaActual, onLogout }) => {
   const esAdmin = user?.rol === 'ROLE_ADMIN';
   const esCliente = user?.rol === 'ROLE_CLIENTE';
   const inicial = (user?.nombre || '?').charAt(0).toUpperCase();
+
+   // Trae los datos más recientes del cliente (por si el Admin los editó)
+  const [datosFrescos, setDatosFrescos] = useState(null);
+
+  useEffect(() => {
+    if (esCliente && user?.username) {
+      apiService.getClientes()
+        .then((lista) => {
+          const propio = (lista || []).find(c => c.email === user.username);
+          if (propio) setDatosFrescos(propio);
+        })
+        .catch(() => {});
+    }
+  }, [esCliente, user?.username]);
 
   const handleLogout = () => {
     onLogout();
@@ -57,11 +72,11 @@ export const Perfil = ({ user, setVistaActual, onLogout }) => {
                 <>
                   <div className='flex items-center gap-3 p-3 rounded-xl bg-gray-50/50 border border-gray-100/80 hover:border-purple-200/50 transition-all duration-200'>
                     <div className='w-9 h-9 rounded-lg bg-gradient-to-br from-purple-600 to-fuchsia-500 flex items-center justify-center shadow-sm'><Phone className='w-4 h-4 text-white' /></div>
-                    <div><p className='text-[11px] text-gray-400 font-semibold uppercase tracking-wider'>Teléfono</p><p className='text-sm font-bold text-gray-800'>{user?.telefono || 'No especificado'}</p></div>
+                    <div><p className='text-[11px] text-gray-400 font-semibold uppercase tracking-wider'>Teléfono</p><p className='text-sm font-bold text-gray-800'>{(datosFrescos?.telefono || user?.telefono) || 'No especificado'}</p></div>
                   </div>
                   <div className='flex items-center gap-3 p-3 rounded-xl bg-gray-50/50 border border-gray-100/80 hover:border-purple-200/50 transition-all duration-200'>
                     <div className='w-9 h-9 rounded-lg bg-gradient-to-br from-purple-600 to-fuchsia-500 flex items-center justify-center shadow-sm'><MapPin className='w-4 h-4 text-white' /></div>
-                    <div><p className='text-[11px] text-gray-400 font-semibold uppercase tracking-wider'>Dirección</p><p className='text-sm font-bold text-gray-800'>{user?.direccion || 'No especificada'}</p></div>
+                    <div><p className='text-[11px] text-gray-400 font-semibold uppercase tracking-wider'>Dirección</p><p className='text-sm font-bold text-gray-800'>{(datosFrescos?.direccion || user?.direccion) || 'No especificada'}</p></div>
                   </div>
                 </>
               )}
