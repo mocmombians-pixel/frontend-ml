@@ -49,7 +49,10 @@ export const AdminDashboard = ({}) => {
   }, []);
 
   // --- Métricas del panel ---
-  const totalRecaudado = ventas.reduce((acc, v) => acc + (v.total || 0), 0);
+  //const totalRecaudado = ventas.reduce((acc, v) => acc + (v.total || 0), 0);
+  const totalRecaudado = ventas
+    .filter(v => (v.estadoPago || '').toUpperCase() === 'PAGADO' || (v.estadoPago || '').toUpperCase() === 'PAID')
+    .reduce((acc, v) => acc + (v.total || 0), 0);
   const ordenesTotales = ventas.length;
   const productosActivos = productos.filter(p => p.stock > 0).length;
   const totalCategorias = categorias.length;
