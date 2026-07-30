@@ -138,8 +138,13 @@ function App() {
        onLogout={handleLogout}
        />;
 
+       /*case 'miscompras':
+        return <ClienteDashboard setVistaActual={setVistaActual}
+       user={user}*/
+       //addToCart={addToCart} 
        case 'miscompras':
         return <ClienteDashboard setVistaActual={setVistaActual}
+       setVentaActiva={setVentaActiva}
        user={user}
        //addToCart={addToCart} 
        />;

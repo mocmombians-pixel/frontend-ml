@@ -405,6 +405,17 @@ export const apiService = {
         );
         return await handleResponse(response);
     },
+    cancelarVenta: async(id) =>{
+        const response = await fetch(
+            API_URL+'ventas/'+id+'/cancelar',
+            {
+                method:'PUT',
+                headers: getHeaders()
+            }
+
+        );
+        return await handleResponse(response);
+    },
 
     //metodos de paago
 

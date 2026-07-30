@@ -5,7 +5,7 @@ import {
   CheckCircle2, Clock, XCircle, AlertTriangle, ShoppingCart, Sparkles
 } from 'lucide-react';
 
-export const ClienteDashboard = ({}) => {
+export const ClienteDashboard = ({setVistaActual, setVentaActiva}) => {
   const [compras, setCompras] = useState([]);
   const [carga, setCarga] = useState(true);
   const [error, setError] = useState('');
@@ -35,6 +35,18 @@ export const ClienteDashboard = ({}) => {
 
   const toggleExpandido = (id) => {
     setExpandido(expandido === id ? null : id);
+  };
+  const handleCancelar = async (idVenta) => {
+    if (!window.confirm('¿Seguro que quieres cancelar este pedido? El stock de los productos se regresará.')) {
+      return;
+    }
+    try {
+      await apiService.cancelarVenta(idVenta);
+      const datosActualizados = await apiService.getMyPurchases();
+      setCompras(datosActualizados || []);
+    } catch (err) {
+      alert('No se pudo cancelar el pedido: ' + err.message);
+    }
   };
 
   if (carga) {
@@ -140,6 +152,10 @@ export const ClienteDashboard = ({}) => {
                 venta={venta}
                 expandido={expandido === venta.id}
                 onToggle={() => toggleExpandido(venta.id)}
+
+                setVistaActual={setVistaActual}
+                setVentaActiva={setVentaActiva}
+                onCancelar={handleCancelar}
               />
             ))}
           </div>
@@ -186,7 +202,7 @@ const EstadoBadge = ({ estado }) => {
   );
 };
 
-const CompraCard = ({ venta, expandido, onToggle }) => {
+const CompraCard = ({ venta, expandido, onToggle, setVistaActual, setVentaActiva, onCancelar }) => {
   const fecha = venta.fecha ? new Date(venta.fecha + 'T00:00:00').toLocaleDateString('es-MX', {
     day: '2-digit', month: 'long', year: 'numeric'
   }) : '—';
@@ -196,7 +212,7 @@ const CompraCard = ({ venta, expandido, onToggle }) => {
   return (
     <div className='group bg-white rounded-2xl border border-gray-200/80 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md hover:border-purple-200/60'>
       {/* Header clickeable */}
-      <button
+      <div
         onClick={onToggle}
         className='w-full flex items-center justify-between gap-4 p-5 text-left cursor-pointer'
       >
@@ -218,7 +234,7 @@ const CompraCard = ({ venta, expandido, onToggle }) => {
           </div>
         </div>
 
-        <div className='flex items-center gap-4 flex-shrink-0'>
+        {/*<div className='flex items-center gap-4 flex-shrink-0'>
           <div className='text-right'>
             <p className='text-[10px] text-gray-400 font-semibold uppercase tracking-wider'>Total</p>
             <span className='font-black text-lg text-purple-900'>
@@ -227,7 +243,39 @@ const CompraCard = ({ venta, expandido, onToggle }) => {
           </div>
           <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${expandido ? 'rotate-180' : ''}`} />
         </div>
-      </button>
+      </button>*/}
+
+      <div className='flex items-center gap-3 flex-shrink-0'>
+          {(venta.estadoPago || '').toUpperCase() === 'PENDIENTE' && (
+            <div className='flex items-center gap-1.5' onClick={(e) => e.stopPropagation()}>
+              <button
+                onClick={() => {
+                  setVentaActiva(venta);
+                  setVistaActual('checkout');
+                }}
+                className='px-3 py-1.5 bg-gradient-to-r from-purple-700 to-fuchsia-600 hover:from-violet-500 hover:to-purple-400 text-white text-[11px] font-bold rounded-lg shadow-sm transition-all duration-200 cursor-pointer'
+              >
+                Continuar Pago
+              </button>
+              <button
+                onClick={() => onCancelar(venta.id)}
+                className='px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-[11px] font-bold rounded-lg border border-red-200/70 transition-all duration-200 cursor-pointer'
+              >
+                Cancelar
+              </button>
+            </div>
+          )}
+          <div className='text-right'>
+            <p className='text-[10px] text-gray-400 font-semibold uppercase tracking-wider'>Total</p>
+            <span className='font-black text-lg text-purple-900'>
+              ${Number(venta.total || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+            </span>
+          </div>
+          <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${expandido ? 'rotate-180' : ''}`} />
+        </div>
+      </div>
+
+
 
       {/* Detalle expandible */}
       {expandido && (
