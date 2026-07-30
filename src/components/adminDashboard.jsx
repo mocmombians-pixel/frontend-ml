@@ -147,6 +147,8 @@ export const AdminDashboard = ({}) => {
       ? { nombre: '', descripcion: '', precio: '', stock: '', imagenUrl: '', categoriaId: '', proveedorId: '' }
       : tipo === 'proveedor'
         ? { nombre: '', telefono: '', email: '', direccion: '' }
+        : tipo === 'cliente'
+          ? { nombre: '', email: '', telefono: '', direccion: '' }
         : { nombre: '' };
     setFormData(vacio);
     setModal({ open: true, type: tipo, mode: 'crear', data: null });
@@ -166,6 +168,8 @@ export const AdminDashboard = ({}) => {
         }
       : tipo === 'proveedor'
         ? { nombre: item.nombre || '', telefono: item.telefono || '', email: item.email || '', direccion: item.direccion || '' }
+         : tipo === 'cliente'
+          ? { nombre: item.nombre || '', email: item.email || '', telefono: item.telefono || '', direccion: item.direccion || '' }
         : { nombre: item.nombre || '' };
     setFormData(data);
     setModal({ open: true, type: tipo, mode: 'editar', data: item });
@@ -217,17 +221,27 @@ export const AdminDashboard = ({}) => {
         } else {
           await apiService.actualizarCategorias(modal.data.id, payload);
         }
+        } else if (modal.type === 'cliente') {
+        const payload = {
+          nombre: formData.nombre,
+          email: formData.email,
+          telefono: formData.telefono,
+          direccion: formData.direccion
+        };
+        await apiService.actualizarClientes(modal.data.id, payload);
       }
       setError('');
       cerrarModal();
       const nuevos = await Promise.all([
         apiService.getProductos(),
         apiService.getCategorias(),
-        apiService.getProveedores()
+        apiService.getProveedores(),
+         apiService.getClientes()
       ]);
       setProductos(nuevos[0] || []);
       setCategorias(nuevos[1] || []);
       setProveedores(nuevos[2] || []);
+       setClientes(nuevos[3] || []);
     } catch (err) {
       setError('Error al guardar: ' + (err.message || 'Intenta de nuevo.'));
     } finally {
@@ -243,16 +257,21 @@ export const AdminDashboard = ({}) => {
         await apiService.eliminarProveedores(confirmDelete.id);
       } else if (confirmDelete.type === 'categoria') {
         await apiService.eliminarCategorias(confirmDelete.id);
+      } else if (confirmDelete.type === 'cliente') {
+        await apiService.eliminarClientes(confirmDelete.id);
       }
+
       setConfirmDelete({ open: false, type: null, id: null, nombre: '' });
       const nuevos = await Promise.all([
         apiService.getProductos(),
         apiService.getCategorias(),
-        apiService.getProveedores()
+        apiService.getProveedores(),
+        apiService.getClientes()
       ]);
       setProductos(nuevos[0] || []);
       setCategorias(nuevos[1] || []);
       setProveedores(nuevos[2] || []);
+      setClientes(nuevos[3] || []);
     } catch (err) {
       setError('Error al eliminar: ' + (err.message || 'Intenta de nuevo.'));
       setConfirmDelete({ open: false, type: null, id: null, nombre: '' });
@@ -751,6 +770,8 @@ export const AdminDashboard = ({}) => {
                   </span>,
                   <AccionesBoton
                     onDetalles={() => setDetalle({ open: true, type: 'cliente', data: c })}
+                    onEditar={() => abrirModalEditar('cliente', c)}
+                    onEliminar={() => setConfirmDelete({ open: true, type: 'cliente', id: c.id, nombre: c.nombre })}
                   />
                 ])}
                 vacio={
@@ -1036,6 +1057,8 @@ const AccionesBoton = ({ onDetalles, onEditar, onEliminar }) => (
     producto: { nombre: 'Producto', icono: <Package className='w-5 h-5' /> },
     proveedor: { nombre: 'Proveedor', icono: <Building2 className='w-5 h-5' /> },
     categoria: { nombre: 'Categoría', icono: <Tags className='w-5 h-5' /> },
+     cliente: { nombre: 'Cliente', icono: <Users className='w-5 h-5' /> },
+  
   };
   const { nombre: nombreTipo, icono } = config[type] || config.categoria;
   const titulo = mode === 'crear' ? `Nuevo ${nombreTipo}` : `Editar ${nombreTipo}`;
@@ -1120,6 +1143,19 @@ const AccionesBoton = ({ onDetalles, onEditar, onEliminar }) => (
 
           {type === 'categoria' && (
             <CampoForm label='Nombre de la categoría' name='nombre' value={formData.nombre} onChange={onChange} required />
+          )}
+
+            {type === 'cliente' && (
+            <>
+              <CampoForm label='Nombre completo' name='nombre' value={formData.nombre} onChange={onChange} required />
+              <CampoForm label='Correo electrónico' name='email' type='email' value={formData.email} onChange={onChange} required />
+              <CampoForm label='Teléfono' name='telefono' value={formData.telefono} onChange={onChange} />
+              <div>
+                <label className='block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5'>Dirección</label>
+                <textarea name='direccion' value={formData.direccion || ''} onChange={onChange} rows={2}
+                  className='w-full px-3.5 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500/30 focus:border-purple-400 text-sm transition-all resize-none' />
+              </div>
+            </>
           )}
         </div>
 
